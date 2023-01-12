@@ -19,6 +19,11 @@
 
 package io.github.dashboard.rocketmq;
 
+import io.github.dashboard.rocketmq.config.RocketMqConfig;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
+import org.apache.rocketmq.tools.admin.MQAdminExt;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +34,7 @@ import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import java.io.File;
+import java.util.UUID;
 
 @SpringBootApplication
 public class Main {
@@ -55,6 +61,16 @@ public class Main {
     @Bean
     RouterFunction<ServerResponse> staticResourceRouter() {
         return RouterFunctions.resources("/**", new FileSystemResource(staticPath));
+    }
+
+    @Bean
+    public MQAdminExt mqAdmin(@Autowired RocketMqConfig rocketMqConfig) throws MQClientException {
+        final DefaultMQAdminExt mqAdminExt = new DefaultMQAdminExt(500);
+        mqAdminExt.setInstanceName(UUID.randomUUID().toString());
+        mqAdminExt.setNamesrvAddr(rocketMqConfig.namesrvAddr);
+        mqAdminExt.setPollNameServerInterval(100);
+        mqAdminExt.start();
+        return mqAdminExt;
     }
 
     public static void main(String[] args) {
